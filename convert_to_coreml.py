@@ -37,6 +37,7 @@ patch_model(model)
 # 3. Load Weights
 checkpoint = torch.load('checkpt/MT_checkpt.pt', map_location='cpu')
 state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint else checkpoint
+state_dict = {k: v for k, v in state_dict.items() if "deform_align" not in k}
 model.load_state_dict(state_dict, strict=False)
 model.eval()
 
