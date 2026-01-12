@@ -1,6 +1,14 @@
 import torch
 import coremltools as ct
 from coreml_wrapper import CoreML_DCNv2_Placeholder, CoreML_FFT_Placeholder
+
+# Lazy/fallback import to avoid mmcv._ext error
+try:
+    from mmcv.ops import ModulatedDeformConv2d, modulated_deform_conv2d
+except ModuleNotFoundError:
+    print("⚠️ MMCV custom ops not found. Replacing ModulatedDeformConv2d with placeholder.")
+    ModulatedDeformConv2d = CoreML_DCNv2_Placeholder
+    
 from model_2D.models.backbones.sr_backbones.DPA_TISR import DPATISR
 
 # 1. Initialize
