@@ -2,7 +2,6 @@ import torch
 import coremltools as ct
 from coreml_wrapper import CoreML_DCNv2_Placeholder, CoreML_FFT_Placeholder
 
-
 # Patch MMCV imports first
 import sys
 import types
@@ -13,8 +12,8 @@ sys.modules['mmcv.ops'] = types.SimpleNamespace(
 
 # Now safe to import the model
 from model_2D.models.backbones.sr_backbones.DPA_TISR import DPATISR
-# 1. Initialize
 
+# 1. Initialize
 model = DPATISR(mid_channels=64, factor=2, bayesian=True)
 
 # 2. Patch DCN and FFT Alignment
@@ -41,17 +40,15 @@ state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint else checkpo
 model.load_state_dict(state_dict, strict=False)
 model.eval()
 
-# 4. Tracing - Use 5D but with absolute constants
-# This prevents the 'view' op from trying to calculate shapes at runtime
-print("Tracing...")
-h, w = 256, 256
-example_input = torch.rand(1, 1, 1, h, w) 
-traced_model = torch.jit.trace(model, example_input, check_trace=False)
+# 4. Script the model instead of tracing
+print("Scripting the model...")
+s_model = torch.jit.script(model)
 
 # 5. Conversion
 print("Converting to CoreML...")
+h, w = 256, 256  # fixed input size
 mlmodel = ct.convert(
-    traced_model,
+    s_model,  # use the scripted model
     source="pytorch",
     inputs=[ct.TensorType(shape=(1, 1, 1, h, w), name="input_image")],
     outputs=[ct.TensorType(name="sr_output"), ct.TensorType(name="confidence")],
