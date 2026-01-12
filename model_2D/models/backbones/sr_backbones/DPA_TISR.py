@@ -295,6 +295,7 @@ class SecondOrderDeformableAlignment(ModulatedDeformConv2d):
                 # Store in/out channels explicitly
         self.in_channels = args[0]   # first arg
         self.out_channels = args[1]  # second arg
+        self.deform_groups = kwargs.pop('deform_groups', 1)  # <-- add this
 
         super(SecondOrderDeformableAlignment, self).__init__(*args, **kwargs)
 
