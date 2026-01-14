@@ -1,0 +1,57 @@
+name: Scale Image 3x
+
+on:
+  workflow_dispatch:
+    inputs:
+      input_image:
+        description: 'Input image path (relative to repo root)'
+        required: false
+        default: 'img.jpeg'
+      output_name:
+        description: 'Output filename'
+        required: false
+        default: 'img_3x.png'
+
+jobs:
+  scale:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install PyTorch (CPU)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch==1.11.0 torchvision==0.12.0 --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install OpenMMLab dependencies
+        run: |
+          python -m pip install openmim
+          python -m mim install mmcv-full==1.5.0 -f https://download.openmmlab.com/mmcv/dist/cpu/torch1.11/index.html
+
+      - name: Install project requirements
+        run: |
+          python -m pip install -r requirements.txt
+
+      - name: Run 3x super-resolution
+        run: |
+          python infer_single_image.py \
+            --input "${{ github.event.inputs.input_image || 'img.jpeg' }}" \
+            --output "${{ github.event.inputs.output_name || 'img_3x.png' }}" \
+            --config config.yaml \
+            --device cpu
+
+      - name: Upload scaled image
+        uses: actions/upload-artifact@v4
+        with:
+          name: scaled-image-3x
+          path: ${{ github.event.inputs.output_name || 'img_3x.png' }}
+          retention-days: 30
