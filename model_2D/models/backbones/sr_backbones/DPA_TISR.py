@@ -292,12 +292,15 @@ class SecondOrderDeformableAlignment(ModulatedDeformConv2d):
     def __init__(self, *args, **kwargs):
         self.max_residue_magnitude = kwargs.pop('max_residue_magnitude', 10)
 
-                # Store in/out channels explicitly
+        # Store in/out channels explicitly
         self.in_channels = args[0]   # first arg
         self.out_channels = args[1]  # second arg
-        self.deform_groups = kwargs.pop('deform_groups', 1)  # <-- add this
+        # Store deform_groups before popping, then re-assign after super().__init__()
+        # because parent class ModulatedDeformConv2d will overwrite self.deform_groups
+        _deform_groups = kwargs.pop('deform_groups', 1)
 
-        super(SecondOrderDeformableAlignment, self).__init__(*args, **kwargs)
+        super(SecondOrderDeformableAlignment, self).__init__(*args, deform_groups=_deform_groups, **kwargs)
+        self.deform_groups = _deform_groups  # Re-assign after parent __init__
 
 
 
